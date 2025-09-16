@@ -46,26 +46,41 @@ class CI(Format):
         - Ensure you provide **exactly one None** value, otherwise the calculation may be ambiguous.
     """
 
-    def calculate(self):
+    def calculate(self, to_dict=False):
         import math
 
         if self.amount is None:
             # Calculate amount (future value)
             jc = self.capital * (1 + self.rate) ** self.period
 
+            self.data[0] = jc
+
     
         elif self.capital is None:
             # Calculate capital (present value)
-            jc = self.all / (1 + self.rate) ** self.period
+            jc = self.amount / (1 + self.rate) ** self.period
+
+            self.data[1] = jc
 
         elif self.rate is None:
             # Calculate rate
-            jc = (self.all / self.capital)**(1 / self.period) - 1
+            jc = (self.amount / self.capital)**(1 / self.period) - 1
+
+            self.data[2] = jc
 
         elif self.period is None:
             # Calculate period
-            jc = math.log(self.all / self.capital) / math.log((1 + self.rate))
+            jc = math.log(self.amount / self.capital) / math.log((1 + self.rate))
 
+            self.data[3] = jc
 
+        if to_dict:
+            return {"Amount":self.data[0], "Capital":self.data[1], "Rate":self.data[2], "Period":self.data[3]}
         
-        return jc
+        return self.data
+    
+    
+
+    
+    
+

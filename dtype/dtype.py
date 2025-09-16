@@ -1,6 +1,9 @@
 
 from typing import Literal
-
+from utils.validators import (
+    check_none_count,
+    is_rate
+)
 
 class Format:
     def __init__(self, data, fw:Literal["ci", "other"]="ci"):
@@ -10,11 +13,20 @@ class Format:
 
         self.len_data = len(data)
 
-        if self.for_what == "ci" and self.len_data != 4:
-            raise Exception("List might have 4 element")
-        
-        if self.for_what == "ci" and self.len_data == 4:
+        if not isinstance(data, list):
+            raise TypeError("data must be a python list()")
+
+        if self.for_what == "ci":
+            if self.len_data != 4:
+                raise ValueError("For 'ci', data must have exactly 4 elements: [amount, capital, rate, period]")
+            
+            check_none_count(self.data)
             self.amount, self.capital, self.rate, self.period = self.data
+            is_rate(self.rate)
+
+        
+
+        
         
 
     def __len__(self):
