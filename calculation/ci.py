@@ -1,53 +1,53 @@
 from dtype.dtype import Format
-
+from typing import Literal
+import math
 
 class CI(Format):
     """
     CI = Compound Interest
-    
-    This class allows you to calculate any one of the four key parameters 
-    in the compound interest formula:
 
-        M = C * (1 + i)^t
+    Calculate any one of the four key parameters in the compound interest formula:
+
+        M = C * (1 + i)^t   (normal compounding)
+        M = C * e^(i * t)   (continuous compounding)
 
     Where:
-        M      : total amount (montante / future value)
-        C      : capital (principal / present value)
-        i      : interest rate per period (as a decimal, e.g., 0.05 for 5%)
+        M      : amount / future value
+        C      : capital / present value
+        i      : interest rate per period (decimal)
         t      : period (number of periods)
 
     Usage:
-        You must provide exactly **four elements** in the CI format:
-        [amount, capital, rate, period]
-        
-        - Use `None` for the value you want to calculate.
-        - The class will automatically compute the missing value.
+        Provide exactly **four elements** in CI format: [amount, capital, rate, period]
+        - Set the value you want to calculate as None.
+        - Class will automatically compute it.
 
     Examples:
-        1️⃣ Calculate future value (amount):
-            ci = CI([None, 3000, 0.05, 3])
-            ci.calculate()  # returns 3477.375
+        ci = CI([None, 3000, 0.05, 3])
+        ci.calculate()  # returns amount
 
-        2️⃣ Calculate capital:
-            ci = CI([3477.375, None, 0.05, 3])
-            ci.calculate()  # returns 3000
+        ci = CI([3477.375, None, 0.05, 3])
+        ci.calculate()  # returns capital
 
-        3️⃣ Calculate rate:
-            ci = CI([3477.375, 3000, None, 3])
-            ci.calculate()  # returns 0.05
+        ci = CI([3477.375, 3000, None, 3])
+        ci.calculate()  # returns rate
 
-        4️⃣ Calculate period:
-            ci = CI([3477.375, 3000, 0.05, None])
-            ci.calculate()  # returns 3
-
-    Notes:
-        - All rates should be expressed as decimals, not percentages.
-        - The calculation for the rate or period uses logarithms to isolate the exponent.
-        - Ensure you provide **exactly one None** value, otherwise the calculation may be ambiguous.
+        ci = CI([3477.375, 3000, 0.05, None])
+        ci.calculate()  # returns period
     """
 
-    def calculate(self, to_dict=False):
-        import math
+    def __init__(self, data, to_dict=False, continuous=False):
+        super().__init__(data)
+        self.to_dict = to_dict
+        self.continuous = continuous
+
+
+    def calculate(self):
+        """Call the proper calculation method depending on continuous flag."""
+        return self._continuous_compounding() if self.continuous else self._ci_normal()
+    
+
+    def _ci_normal(self):
 
         if self.amount is None:
             # Calculate amount (future value)
@@ -73,11 +73,67 @@ class CI(Format):
             jc = math.log(self.amount / self.capital) / math.log((1 + self.rate))
 
             self.data[3] = jc
+            
+        else:
+            raise ValueError("Exactly one value must be None to compute it.")
 
-        if to_dict:
-            return {"Amount":self.data[0], "Capital":self.data[1], "Rate":self.data[2], "Period":self.data[3]}
+        if self.to_dict:
+            return {"Amount":self.data[0],
+                    "Capital":self.data[1],
+                    "Rate":self.data[2],
+                    "Period":self.data[3]
+                }
         
+        return self._return_data()
+    
+    
+
+
+    def _continuous_compounding(self):
+
+        if self.amount is None:
+            result = self.capital * math.e ** (self.rate * self.period)
+            self.data[0] = result
+
+        # Capital (C)
+        elif self.capital is None:
+            result = self.amount / (math.e ** (self.rate * self.period))
+            self.data[1] = result
+
+        # Taxa (i)
+        elif self.rate is None:
+            result = math.log(self.amount / self.capital) / self.period
+            self.data[2] = result
+
+        # Tempo (t)
+        elif self.period is None:
+            result = math.log(self.amount / self.capital) / self.rate
+            self.data[3] = result
+
+        else:
+            raise ValueError("Exactly one value must be None to compute it.")
+        
+        if self.to_dict:
+            return {"Amount":self.data[0],
+                    "Capital":self.data[1],
+                    "Rate":self.data[2],
+                    "Period":self.data[3]
+                }
+        
+        return self._return_data()
+    
+    def _return_data(self):
+        """Return result either as a list or as a dictionary with labels."""
+        if self.to_dict:
+            return {
+                "Amount": self.data[0],
+                "Capital": self.data[1],
+                "Rate": self.data[2],
+                "Period": self.data[3],
+            }
         return self.data
+    
+
     
     
 

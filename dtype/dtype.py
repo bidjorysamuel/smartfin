@@ -24,10 +24,6 @@ class Format:
             self.amount, self.capital, self.rate, self.period = self.data
             is_rate(self.rate)
 
-        
-
-        
-        
 
     def __len__(self):
         return self.len_data
